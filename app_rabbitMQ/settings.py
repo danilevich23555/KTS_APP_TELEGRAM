@@ -10,8 +10,7 @@ class Settings(BaseSettings):
 
 
     rabbit_dsn: str = os.getenv('RABBITMQ_DSN', '')
-    rabbit_user: str = os.getenv('RABBITMQ_USER', '')
-    rabbit_password: str = os.getenv('RABBITMQ_PASS', '')
+
 
     class Config:
         env_file = ".env"
