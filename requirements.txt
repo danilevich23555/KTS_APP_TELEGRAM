@@ -18,5 +18,7 @@ multidict==6.0.4
 pamqp==3.2.1
 python-decouple==3.8
 yarl==1.8.2
+aioredis
+
 
 

@@ -7,6 +7,7 @@ from dcs import Message
 from s3 import S3Client
 from sqllite_db import sqllite_DB
 from redis import redis
+from app_rabbitMQ.app import start_send, start_resive
 
 
 
@@ -26,8 +27,9 @@ async def cli():
             if response_id == None:
                 response_id = (0, 0)
             if x['update_id'] > int(response_id[0]):
-                    await redis_int.redis_put(f'{x["update_id"]}', x)
-                    await scl.insert_records((x['update_id'], r.chat.id))
+                await start_send(f'{x["update_id"]}')
+                await redis_int.redis_put(f'{x["update_id"]}', x)
+                await scl.insert_records((x['update_id'], r.chat.id))
 
 
 
@@ -42,7 +44,8 @@ async def run_uploader():
     s3cli = S3Client(**cr)
     for key in keys:
         result = await redis_int.redis_get(key)
-        r = Message.Schema().load(result['message'])
+        result_rabbit = await start_resive()
+        r = Message.Schema().load(result_rabbit['message'])
         async with TgClientWithFile(config('TELEGRAM_TOKEN')) as tg_cli:
             if r.video == None:
                 try:

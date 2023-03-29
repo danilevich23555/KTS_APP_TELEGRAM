@@ -2,10 +2,10 @@ import asyncio
 from rabbit_client import RabbitClient
 
 
-async def start_send():
+async def start_send(message):
     async with RabbitClient() as connection:
         await RabbitClient.put(connection=connection,
-                               message_data="23dfsdfsdfdsffsadfsddsadfsa",
+                               message_data=message,
                                queue_name='hello')
 
 
