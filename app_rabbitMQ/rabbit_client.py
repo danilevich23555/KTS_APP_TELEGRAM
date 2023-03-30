@@ -24,18 +24,18 @@ class RabbitClient:
             Message(str(message_data).encode()),
             routing_key=queue_name,
         )
-    @staticmethod
-    async def on_message(message: IncomingMessage):
+    @classmethod
+    async def on_message(cls,message: IncomingMessage):
         print("Before sleep!")
         async with message.process():
             print(message.body.decode())
         print("After sleep!")
-    @staticmethod
-    async def receive(connection: connect, queue_name: str):
+    @classmethod
+    async def receive(cls, connection: connect, queue_name: str):
         channel = await connection.channel()
         await channel.set_qos(prefetch_count=1)
         queue = await channel.declare_queue(queue_name)
-        await queue.consume('on_message')
+        await queue.consume(cls.on_message)
         # channel = await connection.channel()
         # await channel.set_qos(prefetch_count=5)
         # queue = await channel.declare_queue(queue_name)
