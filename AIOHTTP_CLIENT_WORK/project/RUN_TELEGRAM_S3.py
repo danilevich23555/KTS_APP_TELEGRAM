@@ -46,8 +46,7 @@ async def cli():
 async def run_uploader():
     # redis_int = redis('redis://localhost', 0)
     async with RabbitClient() as connection:
-        result = await RabbitClient().receive(connection=connection,
-                                   queue_name='hello', )
+        result = await RabbitClient.on_message()
 
     # keys = await redis_int.keys_get()
     cr = dict(
