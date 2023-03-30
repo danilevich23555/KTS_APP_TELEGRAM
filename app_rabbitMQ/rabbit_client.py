@@ -1,9 +1,13 @@
+import json
 from typing import Type, Any
 from types import TracebackType
-from aio_pika import connect, Message
+from aio_pika import connect, Message, IncomingMessage
 from app_rabbitMQ.settings import settings
 
 print(settings.rabbit_dsn)
+
+
+
 class RabbitClient:
 
     def __init__(self):
@@ -20,18 +24,26 @@ class RabbitClient:
             Message(str(message_data).encode()),
             routing_key=queue_name,
         )
-
+    @staticmethod
+    async def on_message(message: IncomingMessage):
+        print("Before sleep!")
+        async with message.process():
+            print(message.body.decode())
+        print("After sleep!")
     @staticmethod
     async def receive(connection: connect, queue_name: str):
-        temp = []
         channel = await connection.channel()
-        await channel.set_qos(prefetch_count=5)
+        await channel.set_qos(prefetch_count=1)
         queue = await channel.declare_queue(queue_name)
-        async with queue.iterator() as queue_iter:
-            async for message in queue_iter:
-                async with message.process():
-                    temp.append(message.body.decode())
-        return temp
+        await queue.consume('on_message')
+        # channel = await connection.channel()
+        # await channel.set_qos(prefetch_count=5)
+        # queue = await channel.declare_queue(queue_name)
+        # async with queue.iterator() as queue_iter:
+        #     async for message in queue_iter:
+        #         async with message.process():
+        #             return message.body.decode()
+
 
     async def __aenter__(self) -> connect:
         return await self.connect_rabbit

@@ -8,6 +8,7 @@ from s3 import S3Client
 from sqllite_db import sqllite_DB
 from redis import redis
 from app_rabbitMQ.rabbit_client import RabbitClient
+from app_rabbitMQ.rabbit_client import RabbitClient
 
 
 
@@ -21,25 +22,23 @@ async def cli():
     scl = sqllite_DB('update_chat_id.db')
     # redis_int = redis('redis://localhost', 0)
     async with TgClientWithFile(config('TELEGRAM_TOKEN')) as tg_cli:
-        res = await tg_cli.get_updates()
-        for x in res['result']:
-            r = Message.Schema().load(x['message'])
-            response_id = await scl.select_id(r.chat.id)
-            if response_id == None:
-                response_id = (0, 0)
-            if x['update_id'] > int(response_id[0]):
-                temp.append(f'{x}')
-                # await redis_int.redis_put(f'{x["update_id"]}', x)
-                await scl.insert_records((x['update_id'], r.chat.id))
-    return temp
-
-async def put_in():
-    result = await cli()
-    for x in result:
         async with RabbitClient() as connection:
-            await RabbitClient.put(connection=connection,
-                                   message_data=f'{x}',
-                                   queue_name='hello')
+            res = await tg_cli.get_updates()
+            for x in res['result']:
+                r = Message.Schema().load(x['message'])
+                response_id = await scl.select_id(r.chat.id)
+                if response_id == None:
+                    response_id = (0, 0)
+                if x['update_id'] > int(response_id[0]):
+                    temp.append(f'{x}')
+                    # await redis_int.redis_put(f'{x["update_id"]}', x)
+                    await RabbitClient.put(connection=connection,
+                                           message_data=f'{x}',
+                                           queue_name='hello')
+                    await scl.insert_records((x['update_id'], r.chat.id))
+
+
+
 
 
 
@@ -47,8 +46,9 @@ async def put_in():
 async def run_uploader():
     # redis_int = redis('redis://localhost', 0)
     async with RabbitClient() as connection:
-        results = await RabbitClient.receive(connection=connection,
+        result = await RabbitClient().receive(connection=connection,
                                    queue_name='hello', )
+
     # keys = await redis_int.keys_get()
     cr = dict(
         endpoint_url=config('DSN_MINIO'),
@@ -56,20 +56,22 @@ async def run_uploader():
         aws_access_key_id=config('MINIO_SECRET_KEY')
     )
     s3cli = S3Client(**cr)
-    for result in results:
-        # result = await redis_int.redis_get(key)
-        r = Message.Schema().load(result['message'])
-        async with TgClientWithFile(config('TELEGRAM_TOKEN')) as tg_cli:
-            if r.video == None:
-                try:
-                    for k in r.photo:
-                        res_path = await tg_cli.get_file(k['file_id'])
-                        await s3cli.fetch_and_upload('tests', f'{res_path.file_path[7:]}',
-                                                     f'{tg_cli.API_FILE_PATH}{tg_cli.token}/{res_path.file_path}')
-                except TypeError:
-                    res_path = await tg_cli.get_file(r.document['file_id'])
-                    await s3cli.fetch_and_upload('tests', f'{r.document["file_name"]}',
+
+    # result = await redis_int.redis_get(key)
+    print(type(result))
+    result_json = eval(result)
+    r = Message.Schema().load(result_json['message'])
+    async with TgClientWithFile(config('TELEGRAM_TOKEN')) as tg_cli:
+        if r.video == None:
+            try:
+                for k in r.photo:
+                    res_path = await tg_cli.get_file(k['file_id'])
+                    await s3cli.fetch_and_upload('tests', f'{res_path.file_path[7:]}',
                                                  f'{tg_cli.API_FILE_PATH}{tg_cli.token}/{res_path.file_path}')
+            except TypeError:
+                res_path = await tg_cli.get_file(r.document['file_id'])
+                await s3cli.fetch_and_upload('tests', f'{r.document["file_name"]}',
+                                             f'{tg_cli.API_FILE_PATH}{tg_cli.token}/{res_path.file_path}')
                 # await redis_int.del_key(key)
 
 
@@ -95,7 +97,7 @@ async def worker():
         await scl.create_table()
         await s3cli.cr_bucket("tests")
     while True:
-        await put_in()
+        await cli()
         await run_uploader()
 
 

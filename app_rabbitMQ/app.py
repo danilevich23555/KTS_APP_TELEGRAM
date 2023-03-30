@@ -1,5 +1,5 @@
 import asyncio
-from app_rabbitMQ.rabbit_client import RabbitClient
+from rabbit_client import RabbitClient
 
 
 async def start_send(message):
@@ -16,3 +16,6 @@ async def start_resive():
 
 
 
+if __name__ == '__main__':
+    asyncio.run(start_resive())
+    asyncio.run(start_resive())
