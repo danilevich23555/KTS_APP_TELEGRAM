@@ -8,7 +8,7 @@ from s3 import S3Client
 from sqllite_db import sqllite_DB
 from redis import redis
 from app_rabbitMQ.rabbit_client import RabbitClient
-from app_rabbitMQ.rabbit_client import RabbitClient
+from app_rabbitMQ.app import start_resive
 
 
 
@@ -45,8 +45,10 @@ async def cli():
 
 async def run_uploader():
     # redis_int = redis('redis://localhost', 0)
-    async with RabbitClient() as connection:
-        result = await RabbitClient.on_message()
+    # async with RabbitClient() as connection:
+    #     await RabbitClient.receive(connection=connection,
+    #                                queue_name='hello', )
+    await start_resive()
 
     # keys = await redis_int.keys_get()
     cr = dict(
@@ -57,21 +59,21 @@ async def run_uploader():
     s3cli = S3Client(**cr)
 
     # result = await redis_int.redis_get(key)
-    print(type(result))
-    result_json = eval(result)
-    r = Message.Schema().load(result_json['message'])
-    async with TgClientWithFile(config('TELEGRAM_TOKEN')) as tg_cli:
-        if r.video == None:
-            try:
-                for k in r.photo:
-                    res_path = await tg_cli.get_file(k['file_id'])
-                    await s3cli.fetch_and_upload('tests', f'{res_path.file_path[7:]}',
-                                                 f'{tg_cli.API_FILE_PATH}{tg_cli.token}/{res_path.file_path}')
-            except TypeError:
-                res_path = await tg_cli.get_file(r.document['file_id'])
-                await s3cli.fetch_and_upload('tests', f'{r.document["file_name"]}',
-                                             f'{tg_cli.API_FILE_PATH}{tg_cli.token}/{res_path.file_path}')
-                # await redis_int.del_key(key)
+    # # print(type(result))
+    # # result_json = eval(result)
+    # r = Message.Schema().load(result_json['message'])
+    # async with TgClientWithFile(config('TELEGRAM_TOKEN')) as tg_cli:
+    #     if r.video == None:
+    #         try:
+    #             for k in r.photo:
+    #                 res_path = await tg_cli.get_file(k['file_id'])
+    #                 await s3cli.fetch_and_upload('tests', f'{res_path.file_path[7:]}',
+    #                                              f'{tg_cli.API_FILE_PATH}{tg_cli.token}/{res_path.file_path}')
+    #         except TypeError:
+    #             res_path = await tg_cli.get_file(r.document['file_id'])
+    #             await s3cli.fetch_and_upload('tests', f'{r.document["file_name"]}',
+    #                                          f'{tg_cli.API_FILE_PATH}{tg_cli.token}/{res_path.file_path}')
+    #             # await redis_int.del_key(key)
 
 
 

@@ -1,5 +1,5 @@
 import asyncio
-from rabbit_client import RabbitClient
+from app_rabbitMQ.rabbit_client import RabbitClient
 
 
 async def start_send(message):
