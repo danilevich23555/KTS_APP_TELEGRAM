@@ -3,7 +3,7 @@ from typing import Type, Any
 from types import TracebackType
 from aio_pika import connect, Message, IncomingMessage
 from app_rabbitMQ.settings import settings
-from AIOHTTP_CLIENT_WORK.project.s3  import S3Client
+
 
 print(settings.rabbit_dsn)
 
