@@ -39,8 +39,8 @@ class RabbitClient:
 
     @classmethod
     async def on_message(cls, message: IncomingMessage = None):
-            async with message.process():
-                print(message.body.decode())
+        async with message.process():
+            print(message.body.decode())
 
 
     @classmethod
