@@ -1,4 +1,5 @@
 import json
+import asyncio
 from typing import Type, Any
 from types import TracebackType
 from aio_pika import connect, Message, IncomingMessage
@@ -6,6 +7,12 @@ from app_rabbitMQ.settings import settings
 
 
 print(settings.rabbit_dsn)
+
+
+class MetaclassWorker():
+    @staticmethod
+    async def handler(msg: IncomingMessage=None):
+        print(msg.body.decode())
 
 
 
@@ -27,9 +34,7 @@ class RabbitClient:
             Message(str(message_data).encode()),
             routing_key=queue_name,
         )
-    @classmethod
-    def recive_message(cls, temp: list = None):
-        return temp
+
 
 
 
