@@ -32,7 +32,7 @@ class TgClient(Client):
         raise NotImplementedError
 
     async def send_message(self, chat_id: int, text: str):
-        params = {'chat_id':chat_id, 'text':text}
+        params = {'chat_id': chat_id, 'text': text}
         resp = await self._perform_request('post', self.get_path(f'sendMessage'), json=params)
         print(resp)
         try:
