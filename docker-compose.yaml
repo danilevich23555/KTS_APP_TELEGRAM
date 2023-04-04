@@ -21,6 +21,11 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: payments
+      RABBITMQ_DEFAULT_PASS: hackme
+      RABBITMQ_DSN: amqp://payments:hackme@127.0.0.1:5672
+
 
 
 
