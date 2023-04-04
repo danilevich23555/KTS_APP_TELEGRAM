@@ -3,16 +3,14 @@ import asyncio
 from typing import Type, Any
 from types import TracebackType
 from aio_pika import connect, Message, IncomingMessage
+from aio_pika.abc import AbstractIncomingMessage
 from app_rabbitMQ.settings import settings
 
 
 print(settings.rabbit_dsn)
 
 
-class MetaclassWorker():
-    @staticmethod
-    async def handler(msg: IncomingMessage=None):
-        print(msg.body.decode())
+
 
 
 
@@ -28,24 +26,22 @@ class RabbitClient:
         # Creating a channel
         channel = await connection.channel()
         # Declaring queue
-        await channel.declare_queue(queue_name)
+        callback_queue=await channel.declare_queue(queue_name)
         # Sending the message
         await channel.default_exchange.publish(
-            Message(str(message_data).encode()),
+            Message(str(message_data).encode(), reply_to=callback_queue.name),
             routing_key=queue_name,
         )
 
 
 
 
+
     @classmethod
     async def on_message(cls, message: IncomingMessage = None):
-        temp = []
-        if message != None:
             async with message.process():
                 print(message.body.decode())
-                temp.append(message.body.decode())
-            return temp
+
 
     @classmethod
     async def receive(cls, connection: connect, queue_name: str):
